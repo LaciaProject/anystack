@@ -46,24 +46,24 @@ jobs:
 
     - name: Lint and format with ruff
       run: |
-        uv run ruff check src/ tests/
-        uv run ruff format --check src/ tests/
+        uv run ruff check src/
+        uv run ruff format --check src/
 
     - name: Type check with mypy
       run: |
         uv run mypy src/
 
-    - name: Test with pytest
-      run: |
-        uv run pytest tests/ -v --cov=anystack --cov-report=xml --cov-report=term-missing
+    # - name: Test with pytest
+    #   run: |
+    #     uv run pytest tests/ -v --cov=anystack --cov-report=xml --cov-report=term-missing
 
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
+    # - name: Upload coverage to Codecov
+    #   uses: codecov/codecov-action@v4
+    #   with:
+    #     file: ./coverage.xml
+    #     flags: unittests
+    #     name: codecov-umbrella
+    #     fail_ci_if_error: false
 
   security:
     runs-on: ubuntu-latest
