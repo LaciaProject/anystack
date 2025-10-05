@@ -14,7 +14,7 @@ import rsa
 
 from .generic import GenericOAuthProvider, GenericOAuthConfig
 from .base import OAuthToken
-from ..base import BaseUser
+from ..base import BaseUser, UserIdentity
 
 
 @dataclass(slots=True)
@@ -123,9 +123,20 @@ class OpenXLabOAuthProvider(GenericOAuthProvider):
 
     @override
     def parse_user(self, profile: Mapping[str, Any]) -> BaseUser:
-        print(profile)
+        provider = "openxlab"
+        subject = str(profile["ssoUid"])  # provider user id
+        email = profile.get("email")
+        identity = UserIdentity(
+            provider=provider,
+            subject=subject,
+            email=email,
+            username=profile.get("username"),
+            claims=dict(profile),
+            primary=True,
+        )
         return BaseUser(
-            id=profile["ssoUid"],
-            email=profile["email"],
+            id=f"{provider}:{subject}",
+            email=email,
+            identities=[identity],
             extra=dict(profile),
         )

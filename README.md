@@ -144,6 +144,7 @@ app = gateway  # 直接作为 ASGI app 运行
 | --- | --- | --- |
 | `anystack.auth.jwt_provider.JWTProvider` | 无状态 JWT 认证，支持自定义用户校验器 | `authlib` |
 | `anystack.auth.oauth.github.GitHubOAuthProvider` | GitHub OAuth 登录适配器，可与 JWTProvider 组合 | `authlib`, GitHub OAuth App |
+| `anystack.auth.oauth.logto.LogtoOAuthProvider` | Logto OIDC 登录适配器，提供通用用户信息映射 | `authlib`, Logto Cloud 或自托管实例 |
 | `anystack.auth.oauth.provider.OAuthAuthProvider` | 直接复用第三方 OAuth Access Token，不再额外颁发 JWT | `authlib` |
 
 ### 数据库迁移
@@ -228,8 +229,6 @@ async def github_callback(request):
         "internal_token": internal_token.access_token,
     })
 ```
-
-完整示范可查看 `examples/github_oauth_app.py`，包含可运行的 Starlette 应用、会话管理以及 `USE_INTERNAL_JWT` 开关。示例依赖 `itsdangerous`（Starlette 会话所需），运行前请确保通过 `uv pip install itsdangerous` 或 `pip install itsdangerous` 完成安装。
 
 ## 设计理念
 1. **Protocol 层** 定义服务与资源的能力边界（如 `DB`, `Queue`, `Storage`）。

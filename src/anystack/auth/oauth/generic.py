@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 
-from ..base import BaseUser
+from ..base import BaseUser, UserIdentity
 from .base import BaseOAuthProvider, OAuthConfig, OAuthToken
 
 
@@ -16,6 +16,9 @@ class GenericOAuthConfig(OAuthConfig):
 
     # 用户信息端点（必需字段）
     userinfo_url: str = ""
+
+    # 提供方名称（用于生成身份标识与区分来源）
+    provider_name: str = "oidc"
 
     # 用户字段映射配置
     user_id_field: str = "sub"  # 用户ID字段名，默认为OIDC标准的'sub'
@@ -124,9 +127,17 @@ class GenericOAuthProvider(BaseOAuthProvider):
         # 如果有自定义解析函数，优先使用
         if self.config.custom_user_parser:
             parsed_data = self.config.custom_user_parser(profile)
-            return BaseUser(
-                id=str(parsed_data.get("id", "")),
+            identity = UserIdentity(
+                provider=self.config.provider_name,
+                subject=str(parsed_data.get("id", "")),
                 email=parsed_data.get("email"),
+                claims=dict(profile),
+                primary=True,
+            )
+            return BaseUser(
+                id=f"{self.config.provider_name}:{identity.subject}",
+                email=identity.email,
+                identities=[identity],
                 extra=parsed_data.get("extra", {}),
             )
 
@@ -147,7 +158,21 @@ class GenericOAuthProvider(BaseOAuthProvider):
             if value is not None:
                 extra[local_key] = value
 
-        return BaseUser(id=str(user_id), email=email, extra=extra)
+        subject = str(user_id)
+        identity = UserIdentity(
+            provider=self.config.provider_name,
+            subject=subject,
+            email=email,
+            claims=dict(profile),
+            primary=True,
+        )
+
+        return BaseUser(
+            id=f"{self.config.provider_name}:{subject}",
+            email=email,
+            identities=[identity],
+            extra=extra,
+        )
 
 
 def create_keycloak_config(

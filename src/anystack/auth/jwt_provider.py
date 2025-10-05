@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from authlib.jose import JsonWebToken, JWTClaims
 from authlib.jose.errors import JoseError
 
-from .base import BaseAuthProtocol, BaseUser, BaseAuthToken, BaseUserValidator
+from .base import BaseAuthProtocol, BaseUser, BaseAuthToken, BaseUserValidator, UserIdentity
 
 
 @dataclass
@@ -172,10 +172,44 @@ class JWTProvider(BaseAuthProtocol):
         if not user_id:
             return None
 
+        # Extract optional RBAC and identities from user_data if present
+        roles = set(user_data.get("roles", []) or [])
+        permissions = set(user_data.get("permissions", []) or [])
+
+        identities_payload = user_data.get("identities", []) or []
+        identities: list[UserIdentity] = []
+        if isinstance(identities_payload, list):
+            for item in identities_payload:
+                try:
+                    identities.append(
+                        UserIdentity(
+                            provider=str(item.get("provider")),
+                            subject=str(item.get("subject")),
+                            email=item.get("email"),
+                            username=item.get("username"),
+                            tenant=item.get("tenant"),
+                            claims=item.get("claims", {}) or {},
+                            primary=bool(item.get("primary", False)),
+                        )
+                    )
+                except Exception:
+                    # Ignore malformed identity payloads; keep token usable
+                    continue
+
+        # Remove reserved keys from extra to avoid duplication
+        extra = {
+            k: v
+            for k, v in user_data.items()
+            if k not in {"roles", "permissions", "identities"}
+        }
+
         return BaseUser(
             id=user_id,
             email=email,
-            extra=user_data,
+            roles=roles,
+            permissions=permissions,
+            identities=identities,
+            extra=extra,
         )
 
     async def refresh_token(self, refresh_token: str) -> BaseAuthToken:

@@ -1,6 +1,7 @@
 from .base import BaseOAuthProvider, OAuthConfig, OAuthToken, OAuthResult
 from .github import GitHubOAuthConfig, GitHubOAuthProvider
-from .keycloak import KeycloakOAuthConfig, KeycloakOAuthProvider
+# from .keycloak import KeycloakOAuthConfig, KeycloakOAuthProvider
+from .logto import LogtoOAuthConfig, LogtoOAuthProvider
 from .generic import (
     GenericOAuthConfig, 
     GenericOAuthProvider,
@@ -18,8 +19,10 @@ __all__ = [
     "OAuthResult",
     "GitHubOAuthConfig",
     "GitHubOAuthProvider", 
-    "KeycloakOAuthConfig",
-    "KeycloakOAuthProvider",
+    # "KeycloakOAuthConfig",
+    # "KeycloakOAuthProvider",
+    "LogtoOAuthConfig",
+    "LogtoOAuthProvider",
     "GenericOAuthConfig",
     "GenericOAuthProvider",
     "create_keycloak_config",

@@ -5,7 +5,7 @@ from typing import Any, Mapping, Sequence
 
 from authlib.integrations.httpx_client import AsyncOAuth2Client
 
-from ..base import BaseUser
+from ..base import BaseUser, UserIdentity
 from .base import BaseOAuthProvider, OAuthConfig
 
 
@@ -68,6 +68,7 @@ class GitHubOAuthProvider(BaseOAuthProvider):
         return profile
 
     def parse_user(self, profile: Mapping[str, Any]) -> BaseUser:
+        provider = "github"
         github_id = profile.get("id")
         if github_id is None:
             raise ValueError("GitHub profile does not contain an id")
@@ -80,4 +81,15 @@ class GitHubOAuthProvider(BaseOAuthProvider):
             "profile_url": profile.get("html_url"),
         }
 
-        return BaseUser(id=str(github_id), email=email, extra=extra)
+        subject = str(github_id)
+        identity = UserIdentity(
+            provider=provider,
+            subject=subject,
+            email=email,
+            username=profile.get("login"),
+            claims=dict(profile),
+            primary=True,
+        )
+
+        # Use provider-qualified id to avoid cross-provider collision where no user store exists
+        return BaseUser(id=f"{provider}:{subject}", email=email, identities=[identity], extra=extra)
